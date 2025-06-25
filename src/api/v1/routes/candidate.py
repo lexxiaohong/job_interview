@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends
 import enum
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from src.database import CandidateModel, get_db
 
 candidate_router = APIRouter()
@@ -31,3 +33,14 @@ async def create_candidate(candidate: CandidateCreate, db: AsyncSession = Depend
     await db.commit()
     await db.refresh(db_candidate)
     return db_candidate
+
+
+@candidate_router.get("/")
+async def list_candidates(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(CandidateModel).options(selectinload(CandidateModel.interviews))
+    )
+    candidates = result.scalars().all()
+    return candidates
+
+

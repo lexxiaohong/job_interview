@@ -37,8 +37,8 @@ class CandidateModel(Base):
     position = Column(String, nullable=False)
     status = Column(Enum(CandidateStatus), nullable=False)
 
-    # relationship: One Candidate -> Many Interviews
-    interviews = relationship("InterviewModel", back_populates="candidate")
+    interviews = relationship("InterviewModel", back_populates="candidate", lazy="selectin")
+
 
 class InterviewModel(Base):
     __tablename__ = "interviews"

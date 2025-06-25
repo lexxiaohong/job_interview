@@ -1,7 +1,4 @@
 from fastapi import APIRouter, FastAPI
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from src.database import Base, engine
 from src.api.v1.routes.health_check import health_check_router
 from src.api.v1.routes.candidate import candidate_router
