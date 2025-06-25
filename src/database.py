@@ -45,7 +45,7 @@ class CandidateModel(Base):
 class InterviewModel(Base):
     __tablename__ = "interviews"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
+    candidate_id = Column(String, ForeignKey("candidates.id"), nullable=False)
     interviewer = Column(String, nullable=False)
     scheduled_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     result = Column(String, nullable=True)
