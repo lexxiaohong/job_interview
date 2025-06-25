@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 import enum
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -19,6 +19,9 @@ class CandidateCreate(BaseModel):
     name: str
     email: str
     position: str
+    status: CandidateStatusEnum
+
+class CandidateStatusUpdate(BaseModel):
     status: CandidateStatusEnum
 
 @candidate_router.post("/")
@@ -42,5 +45,19 @@ async def list_candidates(db: AsyncSession = Depends(get_db)):
     )
     candidates = result.scalars().all()
     return candidates
+
+
+@candidate_router.patch("/{candidate_id}")
+async def update_candidate_status(candidate_id: str, status_update: CandidateStatusUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(CandidateModel).where(CandidateModel.id == candidate_id))
+    candidate = result.scalars().first()
+
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    candidate.status = status_update.status
+    await db.commit()
+
+    return candidate
 
 

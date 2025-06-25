@@ -31,7 +31,9 @@ class CandidateStatus(str, enum.Enum):
 
 class CandidateModel(Base):
     __tablename__ = "candidates"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     position = Column(String, nullable=False)
