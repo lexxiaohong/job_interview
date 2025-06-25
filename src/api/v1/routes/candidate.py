@@ -47,9 +47,9 @@ async def list_candidates(db: AsyncSession = Depends(get_db)):
     return candidates
 
 
-@candidate_router.patch("/{candidate_id}")
-async def update_candidate_status(candidate_id: str, status_update: CandidateStatusUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(CandidateModel).where(CandidateModel.id == candidate_id))
+@candidate_router.patch("/{id}")
+async def update_candidate_status(id: str, status_update: CandidateStatusUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(CandidateModel).where(CandidateModel.id == id))
     candidate = result.scalars().first()
 
     if not candidate:
@@ -59,5 +59,21 @@ async def update_candidate_status(candidate_id: str, status_update: CandidateSta
     await db.commit()
 
     return candidate
+
+
+@candidate_router.delete("/{id}", status_code=204)
+async def delete_candidate(id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(CandidateModel).where(CandidateModel.id == id))
+    candidate = result.scalars().first()
+
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    await db.delete(candidate)
+    await db.commit()
+
+    return  # status_code=204 จะคืนเปล่า ไม่มี response body
+
+
 
 

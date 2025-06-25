@@ -39,7 +39,7 @@ class CandidateModel(Base):
     position = Column(String, nullable=False)
     status = Column(Enum(CandidateStatus), nullable=False)
 
-    interviews = relationship("InterviewModel", back_populates="candidate", lazy="selectin")
+    interviews = relationship("InterviewModel", back_populates="candidate", lazy="selectin", cascade="all, delete-orphan")
 
 
 class InterviewModel(Base):
