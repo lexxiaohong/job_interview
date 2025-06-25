@@ -5,14 +5,22 @@ from sqlalchemy import UUID, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import datetime
 import enum
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-DATABASE_URL = "sqlite:///./test.db"
+DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+engine = create_async_engine(DATABASE_URL, echo=True)
+AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
 Base = declarative_base()
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
 
 
 class CandidateStatus(str, enum.Enum):
@@ -21,7 +29,7 @@ class CandidateStatus(str, enum.Enum):
     hired = "hired"
     rejected = "rejected"
 
-class Candidate(Base):
+class CandidateModel(Base):
     __tablename__ = "candidates"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
@@ -30,9 +38,9 @@ class Candidate(Base):
     status = Column(Enum(CandidateStatus), nullable=False)
 
     # relationship: One Candidate -> Many Interviews
-    interviews = relationship("Interview", back_populates="candidate")
+    interviews = relationship("InterviewModel", back_populates="candidate")
 
-class Interview(Base):
+class InterviewModel(Base):
     __tablename__ = "interviews"
     id = Column(Integer, primary_key=True, autoincrement=True)
     candidate_id = Column(UUID(as_uuid=True), ForeignKey("candidates.id"), nullable=False)
@@ -41,10 +49,10 @@ class Interview(Base):
     result = Column(String, nullable=True)
 
     # relationships
-    candidate = relationship("Candidate", back_populates="interviews")
-    feedbacks = relationship("Feedback", back_populates="interview")
+    candidate = relationship("CandidateModel", back_populates="interviews")
+    feedbacks = relationship("FeedbackModel", back_populates="interview")
 
-class Feedback(Base):
+class FeedbackModel(Base):
     __tablename__ = "feedbacks"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -52,4 +60,4 @@ class Feedback(Base):
     rating = Column(Integer, nullable=False)
     comment = Column(String, nullable=False)
 
-    interview = relationship("Interview", back_populates="feedbacks")
+    interview = relationship("InterviewModel", back_populates="feedbacks")

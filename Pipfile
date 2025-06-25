@@ -12,7 +12,7 @@ uvicorn = "*"
 pydantic = "*"
 sqlalchemy = "*"
 python-dotenv = "*"
+aiosqlite = "*"
+greenlet = "*"
 
 [dev-packages]
-
-
