@@ -1,7 +1,7 @@
 # src/database.py
 
 import uuid
-from sqlalchemy import UUID, Column, DateTime, Enum, ForeignKey, Integer, String, create_engine
+from sqlalchemy import UUID, Column, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint, create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import datetime
 import enum
@@ -52,14 +52,20 @@ class InterviewModel(Base):
 
     # relationships
     candidate = relationship("CandidateModel", back_populates="interviews")
-    feedbacks = relationship("FeedbackModel", back_populates="interview")
+    feedback = relationship("FeedbackModel", back_populates="interview", uselist=False, cascade="all, delete-orphan")
+
+
 
 class FeedbackModel(Base):
     __tablename__ = "feedbacks"
+    __table_args__ = (
+        UniqueConstraint("interview_id", name="uq_feedback_interview_id"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     interview_id = Column(Integer, ForeignKey("interviews.id"), nullable=False)
     rating = Column(Integer, nullable=False)
     comment = Column(String, nullable=False)
 
-    interview = relationship("InterviewModel", back_populates="feedbacks")
+    interview = relationship("InterviewModel", back_populates="feedback")
+    

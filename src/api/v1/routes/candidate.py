@@ -48,8 +48,9 @@ async def create_candidate(candidate: CandidateCreate, db: AsyncSession = Depend
 @candidate_router.get("/")
 async def list_candidates(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(CandidateModel).options(selectinload(CandidateModel.interviews))
+        select(CandidateModel).options(selectinload(CandidateModel.interviews).selectinload(InterviewModel.feedback))
     )
+
     candidates = result.scalars().all()
     return candidates
 
