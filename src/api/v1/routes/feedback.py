@@ -59,13 +59,13 @@ async def submit_feedback(
     return feedback
 
 
-# @feedback_router.get("", response_model=FeedbackResponse)
-# async def view_feedback(
-#     interview_id: int,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     result = await db.execute(select(FeedbackModel).where(FeedbackModel.interview_id == interview_id))
-#     feedback = result.scalars().first()
-#     if not feedback:
-#         raise HTTPException(status_code=404, detail="Feedback not found")
-#     return feedback
+@feedback_router.get("")
+async def view_feedback(
+    interview_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(FeedbackModel).where(FeedbackModel.interview_id == interview_id))
+    feedback = result.scalars().first()
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    return feedback
