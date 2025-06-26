@@ -251,3 +251,27 @@ async def test_update_candidate_status_success_with_mock():
 
     mock_db.refresh.assert_awaited_once()
 
+@pytest.mark.asyncio
+async def test_update_candidate_status_not_found():
+    candidate_id = "non-existent-id"
+    status_update = CandidateStatusUpdate(status=CandidateStatusEnum.INTERVIEWING)
+
+    # Mock db session
+    mock_db = AsyncMock()
+    
+    # ให้ simulate เหมือนไม่เจอ candidate
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    mock_db.execute.return_value = mock_result
+
+    # Test และ assert ว่าเกิด HTTPException 404
+    with pytest.raises(HTTPException) as exc_info:
+        await update_candidate_status(id=candidate_id, status_update=status_update, db=mock_db)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Candidate not found"
+
+    mock_db.execute.assert_awaited_once()
+    mock_db.commit.assert_not_awaited()
+    mock_db.refresh.assert_not_awaited()
+
