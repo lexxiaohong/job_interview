@@ -44,6 +44,9 @@ class FeedbackResponse(BaseModel):
     rating: int
     comment: str
 
+    class Config:
+        from_attributes = True
+
 class InterviewResponse(BaseModel):
     id: int
     candidate_id: str
@@ -51,6 +54,9 @@ class InterviewResponse(BaseModel):
     scheduled_at: datetime.datetime  # ISO format datetime string
     result: Optional[str]
     feedback: Optional[FeedbackResponse]
+
+    class Config:
+        from_attributes = True
 
  
 class CandidateListDataResponse(BaseModel):
@@ -60,6 +66,9 @@ class CandidateListDataResponse(BaseModel):
     position: str
     status: CandidateStatusEnum
     interviews: List[InterviewResponse] = []
+
+    class Config:
+        from_attributes = True
 
 
 

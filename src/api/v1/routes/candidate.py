@@ -8,9 +8,11 @@ from sqlalchemy.orm import selectinload
 from src.schemas.candidate import (
     CandidateCreate,
     CandidateCreateDataResponse,
+    CandidateListDataResponse,
     CandidateListResponse,
     CandidateCreateResponse,
     CandidateStatusUpdate,
+    InterviewResponse,
 )
 from src.database import CandidateModel, InterviewModel, get_db
 
@@ -61,10 +63,16 @@ async def list_candidates(db: AsyncSession = Depends(get_db)):
     )
 
     candidates = candidate_query_result.scalars().all()
+
+    data: List[CandidateListDataResponse] = [
+        CandidateListDataResponse.model_validate(candidate)
+        for candidate in candidates
+    ]
+  
     result = {
         "status": True,
         "message": "Candidates retrieved successfully",
-        "data": candidates,
+        "data": data
     }
 
     return result
