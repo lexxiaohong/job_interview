@@ -5,13 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.schemas.candidate import CandidateCreate, CandidateListResponse, CandidateResponse, CandidateStatusUpdate
+from src.schemas.candidate import CandidateCreate, CandidateListResponse, CandidateCreateResponse, CandidateStatusUpdate
 from src.database import CandidateModel, InterviewModel, get_db
 
 candidate_router = APIRouter()
 
 
-@candidate_router.post("/", response_model=CandidateResponse, status_code=201)
+@candidate_router.post("/", response_model=CandidateCreateResponse, status_code=201)
 async def create_candidate(
     candidate: CandidateCreate, db: AsyncSession = Depends(get_db)
 ):
