@@ -6,23 +6,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.schemas.feedback import (
+    FeedbackCreate,
+    FeedbackCreateResponse,
+    FeedbackViewResponse,
+)
 from src.database import FeedbackModel, InterviewModel, get_db
 
 feedback_router = APIRouter()
 
 
-class FeedbackCreate(BaseModel):
-    rating: int
-    comment: Optional[str]
-
-
-class FeedbackResponse(BaseModel):
-    id: int
-    rating: int
-    comment: Optional[str]
-
-
-@feedback_router.post("", response_model=FeedbackResponse)
+@feedback_router.post("", response_model=FeedbackCreateResponse, status_code=201)
 async def submit_feedback(
     interview_id: int, feedback_data: FeedbackCreate, db: AsyncSession = Depends(get_db)
 ):
@@ -48,10 +42,16 @@ async def submit_feedback(
     await db.commit()
     await db.refresh(feedback)
 
-    return feedback
+    result = {
+        "status": True,
+        "message": "Feedback submitted successfully",
+        "data": feedback,
+    }
+
+    return result
 
 
-@feedback_router.get("")
+@feedback_router.get("", response_model=FeedbackViewResponse)
 async def view_feedback(interview_id: int, db: AsyncSession = Depends(get_db)):
     feedback_query_result = await db.execute(
         select(FeedbackModel).where(FeedbackModel.interview_id == interview_id)
@@ -59,4 +59,10 @@ async def view_feedback(interview_id: int, db: AsyncSession = Depends(get_db)):
     feedback = feedback_query_result.scalars().first()
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
-    return feedback
+
+    result = {
+        "status": True,
+        "message": "Feedback retrieved successfully",
+        "data": feedback,
+    }
+    return result
