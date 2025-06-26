@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 import datetime
@@ -70,3 +71,31 @@ async def test_create_schedule_interview_success_with_mock():
     assert refresh_obj.scheduled_at == interview_data.scheduled_at
     assert refresh_obj.result == interview_data.result
     
+
+@pytest.mark.asyncio
+async def test_create_schedule_interview_candidate_not_found():
+    # Arrange
+    mock_db = AsyncMock()
+
+    # Simulate db.execute().scalars().first() returning None
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    mock_db.execute.return_value = mock_result
+
+    interview_data = InterviewCreate(
+        interviewer="interviewer_1",
+        scheduled_at=datetime.datetime(2025, 7, 1, 8, 0),
+        result="PASS"
+    )
+
+    # Act + Assert
+    with pytest.raises(HTTPException) as exc_info:
+        await create_schedule_interview(candidate_id="not-exist-id", interview=interview_data, db=mock_db)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Candidate not found"
+
+    mock_db.execute.assert_awaited_once()
+    mock_db.add.assert_not_called()
+    mock_db.commit.assert_not_awaited()
+    mock_db.refresh.assert_not_awaited()

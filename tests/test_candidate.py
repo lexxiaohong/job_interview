@@ -156,8 +156,8 @@ async def test_create_candidate_with_mock_duplicate_email():
 
     mock_db.execute.assert_awaited_once()
     mock_db.add.assert_not_called()
-    mock_db.commit.assert_not_called()
-    mock_db.refresh.assert_not_called()
+    mock_db.commit.assert_not_awaited()
+    mock_db.refresh.assert_not_awaited()
 
 
 @pytest.mark.asyncio
