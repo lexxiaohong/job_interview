@@ -1,43 +1,17 @@
-import datetime
-import enum
-from typing import Optional
-
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.schemas.candidate import CandidateCreate, CandidateListResponse, CandidateResponse, CandidateStatusUpdate
 from src.database import CandidateModel, InterviewModel, get_db
 
 candidate_router = APIRouter()
 
 
-class CandidateStatusEnum(str, enum.Enum):
-    APPLIED = "applied"
-    INTERVIEWING = "interviewing"
-    HIRED = "hired"
-    REJECTED = "rejected"
-
-
-class CandidateCreate(BaseModel):
-    name: str
-    email: str
-    position: str
-    status: CandidateStatusEnum
-
-
-class CandidateStatusUpdate(BaseModel):
-    status: CandidateStatusEnum
-
-
-class InterviewCreate(BaseModel):
-    interviewer: str
-    scheduled_at: datetime.datetime
-    result: Optional[str]
-
-
-@candidate_router.post("/")
+@candidate_router.post("/", response_model=CandidateResponse, status_code=201)
 async def create_candidate(
     candidate: CandidateCreate, db: AsyncSession = Depends(get_db)
 ):
@@ -64,7 +38,7 @@ async def create_candidate(
     return db_candidate
 
 
-@candidate_router.get("/")
+@candidate_router.get("/", response_model=CandidateListResponse)
 async def list_candidates(db: AsyncSession = Depends(get_db)):
     candidate_query_result = await db.execute(
         select(CandidateModel).options(
@@ -75,14 +49,22 @@ async def list_candidates(db: AsyncSession = Depends(get_db)):
     )
 
     candidates = candidate_query_result.scalars().all()
-    return candidates
+    result = {
+        "status": True,
+        "message": "Candidates retrieved successfully",
+        "data": candidates,
+    }
+
+    return result
 
 
 @candidate_router.patch("/{id}")
 async def update_candidate_status(
     id: str, status_update: CandidateStatusUpdate, db: AsyncSession = Depends(get_db)
 ):
-    candidate_query_result = await db.execute(select(CandidateModel).where(CandidateModel.id == id))
+    candidate_query_result = await db.execute(
+        select(CandidateModel).where(CandidateModel.id == id)
+    )
     candidate = candidate_query_result.scalars().first()
 
     if not candidate:
@@ -97,7 +79,9 @@ async def update_candidate_status(
 
 @candidate_router.delete("/{id}", status_code=204)
 async def delete_candidate(id: str, db: AsyncSession = Depends(get_db)):
-    candidate_query_result = await db.execute(select(CandidateModel).where(CandidateModel.id == id))
+    candidate_query_result = await db.execute(
+        select(CandidateModel).where(CandidateModel.id == id)
+    )
     candidate = candidate_query_result.scalars().first()
 
     if not candidate:
@@ -107,30 +91,3 @@ async def delete_candidate(id: str, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     return  # No content response (204 No Content)
-
-
-@candidate_router.post("/{id}/interviews")
-async def create_schedule_interview(
-    id: str, interview: InterviewCreate, db: AsyncSession = Depends(get_db)
-):
-
-    candidate_query_result = await db.execute(
-        select(CandidateModel).where(CandidateModel.id == id)
-    )
-    candidate = candidate_query_result.scalars().first()
-
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
-
-    # Create interview
-    db_interview = InterviewModel(
-        candidate_id=id,
-        interviewer=interview.interviewer,
-        scheduled_at=interview.scheduled_at,
-        result=interview.result,
-    )
-    db.add(db_interview)
-    await db.commit()
-    await db.refresh(db_interview)
-
-    return db_interview

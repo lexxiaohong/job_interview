@@ -18,7 +18,7 @@ class InterviewCreate(BaseModel):
     result: Optional[str]
 
 
-@interview_router.post("/")
+@interview_router.post("")
 async def create_schedule_interview(
     candidate_id: str, interview: InterviewCreate, db: AsyncSession = Depends(get_db)
 ):
