@@ -27,12 +27,12 @@ async def submit_feedback(
     interview_id: int, feedback_data: FeedbackCreate, db: AsyncSession = Depends(get_db)
 ):
 
-    result = await db.execute(
+    interview_query_result = await db.execute(
         select(InterviewModel)
         .where(InterviewModel.id == interview_id)
         .options(selectinload(InterviewModel.feedback))  # preload ก่อน!
     )
-    interview = result.scalars().first()
+    interview = interview_query_result.scalars().first()
 
     if not interview:
         raise HTTPException(status_code=404, detail="Interview not found")
@@ -46,16 +46,17 @@ async def submit_feedback(
     db.add(feedback)
 
     await db.commit()
+    await db.refresh(feedback)
 
     return feedback
 
 
 @feedback_router.get("")
 async def view_feedback(interview_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    feedback_query_result = await db.execute(
         select(FeedbackModel).where(FeedbackModel.interview_id == interview_id)
     )
-    feedback = result.scalars().first()
+    feedback = feedback_query_result.scalars().first()
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
     return feedback

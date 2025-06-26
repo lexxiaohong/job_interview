@@ -23,11 +23,11 @@ async def create_schedule_interview(
     candidate_id: str, interview: InterviewCreate, db: AsyncSession = Depends(get_db)
 ):
     # Check candidate exist
-    result = await db.execute(
+    candidate_query_result = await db.execute(
         select(CandidateModel).where(CandidateModel.id == candidate_id)
     )
 
-    candidate = result.scalars().first()
+    candidate = candidate_query_result.scalars().first()
 
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
@@ -48,8 +48,8 @@ async def create_schedule_interview(
 
 @interview_router.get("")
 async def list_candidate_interviews(candidate_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(CandidateModel).where(CandidateModel.id == candidate_id))
-    candidate = result.scalars().first()
+    candidate_query_result = await db.execute(select(CandidateModel).where(CandidateModel.id == candidate_id))
+    candidate = candidate_query_result.scalars().first()
 
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
