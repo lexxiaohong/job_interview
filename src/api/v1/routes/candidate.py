@@ -97,7 +97,7 @@ async def update_candidate_status(
     result = {
         "status": True,
         "message": "Candidate status updated successfully",
-        "data": candidate,
+        "data": CandidateCreateDataResponse.model_validate(candidate),
     }
 
     return result
