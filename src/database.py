@@ -14,5 +14,5 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
 
-
+# cannot move this import to the top because of Base will not know CandidateModel, FeedbackModel, InterviewModel !!!
 from src.models.models import CandidateModel, FeedbackModel, InterviewModel

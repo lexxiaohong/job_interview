@@ -1,20 +1,19 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
 
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.database import CandidateModel, InterviewModel, get_db
 from src.schemas.candidate import (
     CandidateCreate,
     CandidateCreateDataResponse,
+    CandidateCreateResponse,
     CandidateListDataResponse,
     CandidateListResponse,
-    CandidateCreateResponse,
     CandidateStatusUpdate,
-    InterviewResponse,
 )
-from src.database import CandidateModel, InterviewModel, get_db
 
 candidate_router = APIRouter()
 
@@ -65,14 +64,13 @@ async def list_candidates(db: AsyncSession = Depends(get_db)):
     candidates = candidate_query_result.scalars().all()
 
     data: List[CandidateListDataResponse] = [
-        CandidateListDataResponse.model_validate(candidate)
-        for candidate in candidates
+        CandidateListDataResponse.model_validate(candidate) for candidate in candidates
     ]
-  
+
     result = {
         "status": True,
         "message": "Candidates retrieved successfully",
-        "data": data
+        "data": data,
     }
 
     return result

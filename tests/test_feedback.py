@@ -1,11 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from src.api.v1.routes.feedback import submit_feedback
-from src.models.models import InterviewModel, FeedbackModel
-from src.schemas.feedback import FeedbackCreate, FeedbackCreateData
+
+import pytest
 from fastapi import HTTPException
 
+from src.api.v1.routes.feedback import submit_feedback
+from src.models.models import FeedbackModel, InterviewModel
+from src.schemas.feedback import FeedbackCreate, FeedbackCreateData
+
 # python -m pytest tests/feedback.py
+
 
 @pytest.mark.asyncio
 async def test_submit_feedback_success():
@@ -18,7 +21,7 @@ async def test_submit_feedback_success():
         candidate_id="abc",
         interviewer="interviewer_x",
         scheduled_at="2025-07-01T08:00:00",
-        result="PASS"
+        result="PASS",
     )
     interview.feedback = None  # No feedback so can submit new feedback
 
@@ -38,10 +41,13 @@ async def test_submit_feedback_success():
     async def refresh_side_effect(obj):
         obj.id = 999
         obj.interview_id = interview_id
+
     mock_db.refresh.side_effect = refresh_side_effect
 
     # Actual
-    response = await submit_feedback(interview_id=interview_id, feedback_data=feedback_input, db=mock_db)
+    response = await submit_feedback(
+        interview_id=interview_id, feedback_data=feedback_input, db=mock_db
+    )
 
     assert response["status"] is True
     assert response["message"] == "Feedback submitted successfully"
@@ -64,7 +70,8 @@ async def test_submit_feedback_success():
     assert refresh_obj.interview_id == interview_id
     assert refresh_obj.rating == 5
     assert refresh_obj.comment == "Excellent"
-    
+
+
 @pytest.mark.asyncio
 async def test_submit_feedback_interview_not_found():
     interview_id = 999
@@ -78,7 +85,9 @@ async def test_submit_feedback_interview_not_found():
     mock_db.execute.return_value = mock_result
 
     with pytest.raises(HTTPException) as exc_info:
-        await submit_feedback(interview_id=interview_id, feedback_data=feedback_input, db=mock_db)
+        await submit_feedback(
+            interview_id=interview_id, feedback_data=feedback_input, db=mock_db
+        )
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Interview not found"
@@ -87,6 +96,7 @@ async def test_submit_feedback_interview_not_found():
     mock_db.add.assert_not_called()
     mock_db.commit.assert_not_awaited()
     mock_db.refresh.assert_not_awaited()
+
 
 @pytest.mark.asyncio
 async def test_submit_feedback_already_exists():
@@ -100,13 +110,10 @@ async def test_submit_feedback_already_exists():
         candidate_id="some-candidate-id",
         interviewer="interviewer",
         scheduled_at="2025-07-01T08:00:00",
-        result="PASS"
+        result="PASS",
     )
     interview_with_feedback.feedback = FeedbackModel(
-        id=1,
-        interview_id=interview_id,
-        rating=5,
-        comment="Already submitted"
+        id=1, interview_id=interview_id, rating=5, comment="Already submitted"
     )
 
     mock_db = AsyncMock()
@@ -116,7 +123,9 @@ async def test_submit_feedback_already_exists():
 
     # Act & Assert
     with pytest.raises(HTTPException) as exc_info:
-        await submit_feedback(interview_id=interview_id, feedback_data=feedback_input, db=mock_db)
+        await submit_feedback(
+            interview_id=interview_id, feedback_data=feedback_input, db=mock_db
+        )
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Feedback already exists"

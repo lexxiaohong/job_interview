@@ -1,18 +1,15 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.database import FeedbackModel, InterviewModel, get_db
 from src.schemas.feedback import (
     FeedbackCreate,
     FeedbackCreateData,
     FeedbackCreateResponse,
     FeedbackViewResponse,
 )
-from src.database import FeedbackModel, InterviewModel, get_db
 
 feedback_router = APIRouter()
 
@@ -34,7 +31,6 @@ async def submit_feedback(
 
     if interview.feedback:
         raise HTTPException(status_code=400, detail="Feedback already exists")
-
 
     # use model_dump instead .dict()
     feedback = FeedbackModel(interview_id=interview_id, **feedback_data.model_dump())

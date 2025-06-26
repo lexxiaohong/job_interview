@@ -1,13 +1,15 @@
-from fastapi import HTTPException
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 import datetime
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from fastapi import HTTPException
+
 from src.api.v1.routes.interview import create_schedule_interview
 from src.models.models import CandidateModel, InterviewModel
-from src.schemas.interview import InterviewCreate
-from src.schemas.interview import InterviewCreateData
+from src.schemas.interview import InterviewCreate, InterviewCreateData
 
 # python -m pytest tests/test_interview.py
+
 
 @pytest.mark.asyncio
 async def test_create_schedule_interview_success_with_mock():
@@ -16,18 +18,18 @@ async def test_create_schedule_interview_success_with_mock():
     interview_data = InterviewCreate(
         interviewer="Mock Interviewer",
         scheduled_at=datetime.datetime(2025, 7, 1, 15, 0),
-        result="PASS"
+        result="PASS",
     )
 
     mock_db = AsyncMock()
-    
+
     # simulate: candidate exists
     mock_candidate = CandidateModel(
         id=candidate_id,
         name="Mock User",
         email="mock@example.com",
         position="Python Developer",
-        status="applied"
+        status="applied",
     )
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = mock_candidate
@@ -41,9 +43,12 @@ async def test_create_schedule_interview_success_with_mock():
     # Mock refresh to assign ID
     async def mock_refresh(obj):
         obj.id = 99999
+
     mock_db.refresh.side_effect = mock_refresh
 
-    result = await create_schedule_interview(candidate_id=candidate_id, interview=interview_data, db=mock_db)
+    result = await create_schedule_interview(
+        candidate_id=candidate_id, interview=interview_data, db=mock_db
+    )
 
     assert result["status"] is True
     assert result["message"] == "Interview scheduled successfully"
@@ -61,7 +66,7 @@ async def test_create_schedule_interview_success_with_mock():
     assert add_obj.interviewer == interview_data.interviewer
     assert add_obj.scheduled_at == interview_data.scheduled_at
     assert add_obj.result == interview_data.result
-    
+
     mock_db.commit.assert_awaited_once()
     mock_db.refresh.assert_awaited_once()
     refresh_obj = mock_db.refresh.call_args[0][0]
@@ -70,7 +75,7 @@ async def test_create_schedule_interview_success_with_mock():
     assert refresh_obj.interviewer == interview_data.interviewer
     assert refresh_obj.scheduled_at == interview_data.scheduled_at
     assert refresh_obj.result == interview_data.result
-    
+
 
 @pytest.mark.asyncio
 async def test_create_schedule_interview_candidate_not_found():
@@ -85,12 +90,14 @@ async def test_create_schedule_interview_candidate_not_found():
     interview_data = InterviewCreate(
         interviewer="interviewer_1",
         scheduled_at=datetime.datetime(2025, 7, 1, 8, 0),
-        result="PASS"
+        result="PASS",
     )
 
     # Act + Assert
     with pytest.raises(HTTPException) as exc_info:
-        await create_schedule_interview(candidate_id="not-exist-id", interview=interview_data, db=mock_db)
+        await create_schedule_interview(
+            candidate_id="not-exist-id", interview=interview_data, db=mock_db
+        )
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Candidate not found"

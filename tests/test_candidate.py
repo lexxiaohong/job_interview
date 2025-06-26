@@ -1,5 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
+from fastapi import HTTPException
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +18,7 @@ from src.schemas.candidate import (
     CandidateStatusEnum,
     CandidateStatusUpdate,
 )
+
 
 # python -m pytest tests/test_candidate.py
 
@@ -111,16 +113,6 @@ async def test_create_candidate_with_mock_no_email_duplicate():
     assert refresh_obj.email == "mock@example.com"
     assert refresh_obj.position == "Python Developer"
     assert refresh_obj.status == "applied"
-
-
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-from fastapi import HTTPException
-
-from src.api.v1.routes.candidate import create_candidate
-from src.models.models import CandidateModel
-from src.schemas.candidate import CandidateCreate
 
 
 @pytest.mark.asyncio

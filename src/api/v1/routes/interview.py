@@ -1,19 +1,15 @@
-import datetime
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.database import CandidateModel, InterviewModel, get_db
 from src.schemas.interview import (
     CandiateInterviewListResponse,
     InterviewCreate,
     InterviewCreateData,
     InterviewCreateResponse,
 )
-from src.database import CandidateModel, InterviewModel, get_db
 
 interview_router = APIRouter()
 
@@ -42,8 +38,7 @@ async def create_schedule_interview(
     db.add(db_interview)
     await db.commit()
     await db.refresh(db_interview)
-    
-    
+
     result = {
         "status": True,
         "message": "Interview scheduled successfully",
