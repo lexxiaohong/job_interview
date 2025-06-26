@@ -10,6 +10,11 @@ from src.schemas.candidate import CandidateCreate, CandidateCreateDataResponse
 from src.api.v1.routes.candidate import create_candidate
 
 
+from src.api.v1.routes.candidate import list_candidates
+from src.schemas.candidate import CandidateListDataResponse
+from src.models.models import CandidateModel, InterviewModel, FeedbackModel
+
+
 @pytest.mark.asyncio
 async def test_create_candidate_success_with_db(db_session: AsyncSession):
     candidate_data = CandidateCreate(
@@ -142,3 +147,62 @@ async def test_create_candidate_with_mock_duplicate_email():
     mock_db.add.assert_not_called()
     mock_db.commit.assert_not_called()
     mock_db.refresh.assert_not_called()
+
+
+
+
+
+@pytest.mark.asyncio
+async def test_list_candidates():
+    # Mock feedback
+    feedback = FeedbackModel(
+        id=1,
+        interview_id=123,
+        rating=5,
+        comment="Great"
+    )
+
+    # Mock interview
+    interview = InterviewModel(
+        id=123,
+        candidate_id="abc-123",
+        interviewer="Interviewer A",
+        scheduled_at="2025-07-01T08:00:00",
+        result="PASS",
+        feedback=feedback
+    )
+
+    # Mock candidate
+    candidate = CandidateModel(
+        id="abc-123",
+        name="Mock User",
+        email="mock@example.com",
+        position="Python Developer",
+        status="applied",
+        interviews=[interview]
+    )
+
+    CandidateListDataResponse.model_validate(candidate)
+
+    # Mock db.execute().scalars().all()
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [candidate]
+
+    # Mock db.execute
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    response = await list_candidates(db=mock_db)
+
+    assert response["status"] is True
+    assert response["message"] == "Candidates retrieved successfully"
+    assert len(response["data"]) == 1
+
+    candidate_response = response["data"][0]
+    assert candidate_response.name == "Mock User"
+    assert candidate_response.email == "mock@example.com"
+    assert candidate_response.interviews[0].interviewer == "Interviewer A"
+    assert candidate_response.interviews[0].feedback.comment == "Great"
+
+    mock_db.execute.assert_awaited_once()
+
