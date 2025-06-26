@@ -13,6 +13,9 @@ from src.api.v1.routes.candidate import create_candidate
 from src.api.v1.routes.candidate import list_candidates
 from src.schemas.candidate import CandidateListDataResponse
 from src.models.models import CandidateModel, InterviewModel, FeedbackModel
+from src.api.v1.routes.candidate import update_candidate_status
+from src.schemas.candidate import CandidateStatusUpdate, CandidateStatusEnum
+from src.models.models import CandidateModel
 
 
 @pytest.mark.asyncio
@@ -205,4 +208,46 @@ async def test_list_candidates():
     assert candidate_response.interviews[0].feedback.comment == "Great"
 
     mock_db.execute.assert_awaited_once()
+
+
+
+
+@pytest.mark.asyncio
+async def test_update_candidate_status_success_with_mock():
+    candidate_id = "mock-id"
+    old_candidate = CandidateModel(
+        id=candidate_id,
+        name="Mock User",
+        email="mock@example.com",
+        position="Python Developer",
+        status="applied"
+    )
+
+    status_update = CandidateStatusUpdate(status=CandidateStatusEnum.INTERVIEWING)
+
+    # Mock db session
+    mock_db = AsyncMock()
+    # mock db.execute().scalars().first() ให้ return candidate
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = old_candidate
+    mock_db.execute.return_value = mock_result
+
+    mock_db.commit = AsyncMock()
+    mock_db.refresh = AsyncMock()
+
+    # Actual
+    response = await update_candidate_status(id=candidate_id, status_update=status_update, db=mock_db)
+
+    assert response["status"] is True
+    assert response["message"] == "Candidate status updated successfully"
+    assert response["data"].status == "interviewing"
+    assert response["data"].id == candidate_id
+
+    mock_db.execute.assert_awaited_once()
+    mock_db.commit.assert_awaited_once()
+    refresh_obj = mock_db.refresh.call_args[0][0]
+    assert refresh_obj.status == CandidateStatusEnum.INTERVIEWING
+    assert refresh_obj.id == candidate_id
+
+    mock_db.refresh.assert_awaited_once()
 
