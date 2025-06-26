@@ -12,6 +12,9 @@ class FeedbackCreateData(BaseModel):
     rating: int
     comment: Optional[str]
 
+    class Config:
+        from_attributes = True
+
 
 class FeedbackCreateResponse(BaseModel):
     status: bool

@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from src.schemas.feedback import (
     FeedbackCreate,
+    FeedbackCreateData,
     FeedbackCreateResponse,
     FeedbackViewResponse,
 )
@@ -34,9 +35,10 @@ async def submit_feedback(
     if interview.feedback:
         raise HTTPException(status_code=400, detail="Feedback already exists")
 
-    feedback = FeedbackModel(interview_id=interview_id, **feedback_data.dict())
 
-    feedback = FeedbackModel(interview_id=interview_id, **feedback_data.dict())
+    # use model_dump instead .dict()
+    feedback = FeedbackModel(interview_id=interview_id, **feedback_data.model_dump())
+
     db.add(feedback)
 
     await db.commit()
@@ -45,7 +47,7 @@ async def submit_feedback(
     result = {
         "status": True,
         "message": "Feedback submitted successfully",
-        "data": feedback,
+        "data": FeedbackCreateData.model_validate(feedback),
     }
 
     return result
