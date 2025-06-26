@@ -1,38 +1,30 @@
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
-import enum
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from src.database import CandidateModel, FeedbackModel, InterviewModel, get_db
-import datetime
+
+from src.database import FeedbackModel, InterviewModel, get_db
 
 feedback_router = APIRouter()
-
-
 
 
 class FeedbackCreate(BaseModel):
     rating: int
     comment: Optional[str]
 
+
 class FeedbackResponse(BaseModel):
     id: int
     rating: int
     comment: Optional[str]
 
-    class Config:
-        orm_mode = True
-
-
 
 @feedback_router.post("", response_model=FeedbackResponse)
 async def submit_feedback(
-    interview_id: int,
-    feedback_data: FeedbackCreate,
-    db: AsyncSession = Depends(get_db)
+    interview_id: int, feedback_data: FeedbackCreate, db: AsyncSession = Depends(get_db)
 ):
 
     result = await db.execute(
@@ -49,7 +41,6 @@ async def submit_feedback(
         raise HTTPException(status_code=400, detail="Feedback already exists")
 
     feedback = FeedbackModel(interview_id=interview_id, **feedback_data.dict())
-    
 
     feedback = FeedbackModel(interview_id=interview_id, **feedback_data.dict())
     db.add(feedback)
@@ -60,11 +51,10 @@ async def submit_feedback(
 
 
 @feedback_router.get("")
-async def view_feedback(
-    interview_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(select(FeedbackModel).where(FeedbackModel.interview_id == interview_id))
+async def view_feedback(interview_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(FeedbackModel).where(FeedbackModel.interview_id == interview_id)
+    )
     feedback = result.scalars().first()
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
