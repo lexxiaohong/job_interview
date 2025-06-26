@@ -14,5 +14,7 @@ sqlalchemy = "==2.0.41"
 python-dotenv = "*"
 aiosqlite = "*"
 greenlet = "*"
+pytest-asyncio = "*"
 
 [dev-packages]
+pytest = "*"
