@@ -17,6 +17,9 @@ class InterviewCreateData(BaseModel):
     result: Optional[str]
     candidate_id: str
 
+    class Config:
+        from_attributes = True
+
 
 class InterviewCreateResponse(BaseModel):
     status: bool

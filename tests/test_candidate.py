@@ -1,21 +1,24 @@
-# tests/unit/test_create_candidate_with_db.py
 from unittest.mock import AsyncMock, MagicMock
-import pytest
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.models import CandidateModel
-from src.schemas.candidate import CandidateCreate, CandidateCreateDataResponse
-from src.api.v1.routes.candidate import create_candidate
+from src.api.v1.routes.candidate import (
+    create_candidate,
+    list_candidates,
+    update_candidate_status,
+)
+from src.models.models import CandidateModel, FeedbackModel, InterviewModel
+from src.schemas.candidate import (
+    CandidateCreate,
+    CandidateCreateDataResponse,
+    CandidateListDataResponse,
+    CandidateStatusEnum,
+    CandidateStatusUpdate,
+)
 
-
-from src.api.v1.routes.candidate import list_candidates
-from src.schemas.candidate import CandidateListDataResponse
-from src.models.models import CandidateModel, InterviewModel, FeedbackModel
-from src.api.v1.routes.candidate import update_candidate_status
-from src.schemas.candidate import CandidateStatusUpdate, CandidateStatusEnum
-from src.models.models import CandidateModel
+# python -m pytest tests/test_candidate.py
 
 
 @pytest.mark.asyncio
@@ -42,6 +45,7 @@ async def test_create_candidate_success_with_db(db_session: AsyncSession):
 
     # pull candidate from unittest db
     from src.models.models import CandidateModel
+
     query_result = await db_session.execute(
         select(CandidateModel).where(CandidateModel.email == candidate_data.email)
     )
@@ -53,7 +57,7 @@ async def test_create_candidate_success_with_db(db_session: AsyncSession):
     assert db_candidate.position == candidate_data.position
     assert db_candidate.status == candidate_data.status
 
-    
+
 @pytest.mark.asyncio
 async def test_create_candidate_with_mock_no_email_duplicate():
     # Arrange
@@ -63,7 +67,7 @@ async def test_create_candidate_with_mock_no_email_duplicate():
         name="Mock User",
         email="mock@example.com",
         position="Python Developer",
-        status="applied"
+        status="applied",
     )
 
     # จำลองว่าไม่มี email ซ้ำ
@@ -75,8 +79,10 @@ async def test_create_candidate_with_mock_no_email_duplicate():
     mock_db.commit = AsyncMock()
     mock_db.refresh = AsyncMock()
 
-    mock_db.refresh.side_effect = lambda obj: setattr(obj, "id", "mock-id")  # set id after refresh
-  
+    mock_db.refresh.side_effect = lambda obj: setattr(
+        obj, "id", "mock-id"
+    )  # set id after refresh
+
     # Actual
     result = await create_candidate(candidate=candidate_data, db=mock_db)
 
@@ -96,7 +102,7 @@ async def test_create_candidate_with_mock_no_email_duplicate():
     assert added_obj.email == "mock@example.com"
     assert added_obj.position == "Python Developer"
     assert added_obj.status == "applied"
-    
+
     mock_db.commit.assert_awaited_once()
     mock_db.refresh.assert_awaited_once()
     refresh_obj = mock_db.refresh.call_args[0][0]
@@ -105,14 +111,16 @@ async def test_create_candidate_with_mock_no_email_duplicate():
     assert refresh_obj.email == "mock@example.com"
     assert refresh_obj.position == "Python Developer"
     assert refresh_obj.status == "applied"
-    
+
+
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
-from src.schemas.candidate import CandidateCreate
+
 from src.api.v1.routes.candidate import create_candidate
 from src.models.models import CandidateModel
+from src.schemas.candidate import CandidateCreate
 
 
 @pytest.mark.asyncio
@@ -123,7 +131,7 @@ async def test_create_candidate_with_mock_duplicate_email():
         name="Mock User",
         email="duplicate@example.com",
         position="Python Developer",
-        status="applied"
+        status="applied",
     )
 
     # จำลองว่าพบ email ซ้ำใน database
@@ -132,7 +140,7 @@ async def test_create_candidate_with_mock_duplicate_email():
         name="Existing",
         email="duplicate@example.com",
         position="Python Developer",
-        status="applied"
+        status="applied",
     )
 
     mock_result = MagicMock()
@@ -152,18 +160,10 @@ async def test_create_candidate_with_mock_duplicate_email():
     mock_db.refresh.assert_not_called()
 
 
-
-
-
 @pytest.mark.asyncio
 async def test_list_candidates():
     # Mock feedback
-    feedback = FeedbackModel(
-        id=1,
-        interview_id=123,
-        rating=5,
-        comment="Great"
-    )
+    feedback = FeedbackModel(id=1, interview_id=123, rating=5, comment="Great")
 
     # Mock interview
     interview = InterviewModel(
@@ -172,7 +172,7 @@ async def test_list_candidates():
         interviewer="Interviewer A",
         scheduled_at="2025-07-01T08:00:00",
         result="PASS",
-        feedback=feedback
+        feedback=feedback,
     )
 
     # Mock candidate
@@ -182,7 +182,7 @@ async def test_list_candidates():
         email="mock@example.com",
         position="Python Developer",
         status="applied",
-        interviews=[interview]
+        interviews=[interview],
     )
 
     CandidateListDataResponse.model_validate(candidate)
@@ -210,8 +210,6 @@ async def test_list_candidates():
     mock_db.execute.assert_awaited_once()
 
 
-
-
 @pytest.mark.asyncio
 async def test_update_candidate_status_success_with_mock():
     candidate_id = "mock-id"
@@ -220,7 +218,7 @@ async def test_update_candidate_status_success_with_mock():
         name="Mock User",
         email="mock@example.com",
         position="Python Developer",
-        status="applied"
+        status="applied",
     )
 
     status_update = CandidateStatusUpdate(status=CandidateStatusEnum.INTERVIEWING)
@@ -236,7 +234,9 @@ async def test_update_candidate_status_success_with_mock():
     mock_db.refresh = AsyncMock()
 
     # Actual
-    response = await update_candidate_status(id=candidate_id, status_update=status_update, db=mock_db)
+    response = await update_candidate_status(
+        id=candidate_id, status_update=status_update, db=mock_db
+    )
 
     assert response["status"] is True
     assert response["message"] == "Candidate status updated successfully"
@@ -251,6 +251,7 @@ async def test_update_candidate_status_success_with_mock():
 
     mock_db.refresh.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_update_candidate_status_not_found():
     candidate_id = "non-existent-id"
@@ -258,7 +259,7 @@ async def test_update_candidate_status_not_found():
 
     # Mock db session
     mock_db = AsyncMock()
-    
+
     # ให้ simulate เหมือนไม่เจอ candidate
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = None
@@ -266,7 +267,9 @@ async def test_update_candidate_status_not_found():
 
     # Test และ assert ว่าเกิด HTTPException 404
     with pytest.raises(HTTPException) as exc_info:
-        await update_candidate_status(id=candidate_id, status_update=status_update, db=mock_db)
+        await update_candidate_status(
+            id=candidate_id, status_update=status_update, db=mock_db
+        )
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Candidate not found"
@@ -274,4 +277,3 @@ async def test_update_candidate_status_not_found():
     mock_db.execute.assert_awaited_once()
     mock_db.commit.assert_not_awaited()
     mock_db.refresh.assert_not_awaited()
-

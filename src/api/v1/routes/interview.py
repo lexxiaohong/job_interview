@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from src.schemas.interview import (
     CandiateInterviewListResponse,
     InterviewCreate,
+    InterviewCreateData,
     InterviewCreateResponse,
 )
 from src.database import CandidateModel, InterviewModel, get_db
@@ -41,11 +42,12 @@ async def create_schedule_interview(
     db.add(db_interview)
     await db.commit()
     await db.refresh(db_interview)
-
+    
+    
     result = {
         "status": True,
         "message": "Interview scheduled successfully",
-        "data": db_interview,
+        "data": InterviewCreateData.model_validate(db_interview),
     }
 
     return result
