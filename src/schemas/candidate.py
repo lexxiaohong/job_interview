@@ -22,12 +22,17 @@ class CandidateCreate(BaseModel):
 class CandidateStatusUpdate(BaseModel):
     status: CandidateStatusEnum
 
-class CandidateCreateResponse(BaseModel):
+class CandidateCreateDataResponse(BaseModel):
     id: str
     name: str
     email: str
     position: str
     status: CandidateStatusEnum
+
+class CandidateCreateResponse(BaseModel):
+    status: bool
+    message: str
+    data: CandidateCreateDataResponse
 
 
 class FeedbackResponse(BaseModel):
@@ -45,7 +50,7 @@ class InterviewResponse(BaseModel):
     feedback: Optional[FeedbackResponse]
 
  
-class CandidateResponse(BaseModel):
+class CandidateListDataResponse(BaseModel):
     id: str
     name: str
     email: str
@@ -58,4 +63,4 @@ class CandidateResponse(BaseModel):
 class CandidateListResponse(BaseModel):
     status: bool
     message: str
-    data: List[CandidateResponse]
+    data: List[CandidateListDataResponse]

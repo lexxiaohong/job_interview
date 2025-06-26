@@ -5,7 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.schemas.candidate import CandidateCreate, CandidateListResponse, CandidateCreateResponse, CandidateStatusUpdate
+from src.schemas.candidate import (
+    CandidateCreate,
+    CandidateListResponse,
+    CandidateCreateResponse,
+    CandidateStatusUpdate,
+)
 from src.database import CandidateModel, InterviewModel, get_db
 
 candidate_router = APIRouter()
@@ -35,7 +40,13 @@ async def create_candidate(
     await db.commit()
     await db.refresh(db_candidate)
 
-    return db_candidate
+    result = {
+        "status": True,
+        "message": "Candidate created successfully",
+        "data": db_candidate,
+    }
+
+    return result
 
 
 @candidate_router.get("/", response_model=CandidateListResponse)
@@ -58,7 +69,7 @@ async def list_candidates(db: AsyncSession = Depends(get_db)):
     return result
 
 
-@candidate_router.patch("/{id}")
+@candidate_router.patch("/{id}", response_model=CandidateCreateResponse)
 async def update_candidate_status(
     id: str, status_update: CandidateStatusUpdate, db: AsyncSession = Depends(get_db)
 ):
@@ -74,7 +85,13 @@ async def update_candidate_status(
     await db.commit()
     await db.refresh(candidate)
 
-    return candidate
+    result = {
+        "status": True,
+        "message": "Candidate status updated successfully",
+        "data": candidate,
+    }
+
+    return result
 
 
 @candidate_router.delete("/{id}", status_code=204)
