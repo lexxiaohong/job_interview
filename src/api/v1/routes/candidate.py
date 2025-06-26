@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from src.schemas.candidate import (
     CandidateCreate,
+    CandidateCreateDataResponse,
     CandidateListResponse,
     CandidateCreateResponse,
     CandidateStatusUpdate,
@@ -40,11 +41,11 @@ async def create_candidate(
     await db.commit()
     await db.refresh(db_candidate)
 
-    result = {
-        "status": True,
-        "message": "Candidate created successfully",
-        "data": db_candidate,
-    }
+    result = CandidateCreateResponse(
+        status=True,
+        message="Candidate created successfully",
+        data=CandidateCreateDataResponse.model_validate(db_candidate),
+    )
 
     return result
 

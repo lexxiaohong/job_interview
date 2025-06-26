@@ -9,4 +9,18 @@ for production, run the following command to install the required libraries:
 pipenv install
 ```
 
+## access virtualenv
+```
+pipenv shell
+```
+
+## run API server
+```
+uvicorn src.main:app --reload
+```
+
+## run test
+```
+python -m pytest tests/ -vv -s
+```
 

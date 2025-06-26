@@ -29,6 +29,9 @@ class CandidateCreateDataResponse(BaseModel):
     position: str
     status: CandidateStatusEnum
 
+    class Config:
+        from_attributes = True
+
 class CandidateCreateResponse(BaseModel):
     status: bool
     message: str
