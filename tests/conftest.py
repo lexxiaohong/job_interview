@@ -20,5 +20,5 @@ async def db_session():
         yield session
     async with test_engine.begin() as conn:
         print()
-        print("Dropping all tables !!!!")
+        print("Dropping all unittest tables !!!!")
         await conn.run_sync(Base.metadata.drop_all)
