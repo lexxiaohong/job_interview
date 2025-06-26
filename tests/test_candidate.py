@@ -47,7 +47,7 @@ async def test_create_candidate_success_with_db(db_session: AsyncSession):
 
     
 @pytest.mark.asyncio
-async def test_create_candidate_with_mock():
+async def test_create_candidate_with_mock_no_email_duplicate():
     # Arrange
     mock_db = AsyncMock()
 
@@ -67,23 +67,15 @@ async def test_create_candidate_with_mock():
     mock_db.commit = AsyncMock()
     mock_db.refresh = AsyncMock()
 
-    # จำลอง model หลังถูก refresh
-    mock_candidate_model = CandidateModel(
-        id="mock-id",
-        name="Mock User",
-        email="mock@example.com",
-        position="Python Developer",
-        status="applied"
-    )
-    mock_db.refresh.side_effect = lambda obj: setattr(obj, "id", "mock-id")  # set id manually
+    mock_db.refresh.side_effect = lambda obj: setattr(obj, "id", "mock-id")  # set id after refresh
   
-    # Act
+    # Actual
     result = await create_candidate(candidate=candidate_data, db=mock_db)
 
     # Assert
     assert result.status is True
     assert result.message == "Candidate created successfully"
-    assert isinstance(result.data, CandidateCreateDataResponse)
+    assert isinstance(result.data, CandidateCreateDataResponse)  # check type
     assert result.data.email == "mock@example.com"
     assert result.data.name == "Mock User"
 
@@ -107,3 +99,46 @@ async def test_create_candidate_with_mock():
     assert refresh_obj.status == "applied"
     
 
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from fastapi import HTTPException
+from src.schemas.candidate import CandidateCreate
+from src.api.v1.routes.candidate import create_candidate
+from src.models.models import CandidateModel
+
+
+@pytest.mark.asyncio
+async def test_create_candidate_with_mock_duplicate_email():
+    mock_db = AsyncMock()
+
+    candidate_data = CandidateCreate(
+        name="Mock User",
+        email="duplicate@example.com",
+        position="Python Developer",
+        status="applied"
+    )
+
+    # จำลองว่าพบ email ซ้ำใน database
+    duplicate_candidate = CandidateModel(
+        id="existing-id",
+        name="Existing",
+        email="duplicate@example.com",
+        position="Python Developer",
+        status="applied"
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = duplicate_candidate
+    mock_db.execute.return_value = mock_result
+
+    # Act & Assert
+    with pytest.raises(HTTPException) as exc_info:
+        await create_candidate(candidate=candidate_data, db=mock_db)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Candidate with this email already exists"
+
+    mock_db.execute.assert_awaited_once()
+    mock_db.add.assert_not_called()
+    mock_db.commit.assert_not_called()
+    mock_db.refresh.assert_not_called()
