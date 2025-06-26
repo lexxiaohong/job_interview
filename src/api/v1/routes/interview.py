@@ -47,8 +47,8 @@ async def create_schedule_interview(
 
 
 @interview_router.get("")
-async def list_candidate_interviews(id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(CandidateModel).where(CandidateModel.id == id))
+async def list_candidate_interviews(candidate_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(CandidateModel).where(CandidateModel.id == candidate_id))
     candidate = result.scalars().first()
 
     if not candidate:
@@ -56,7 +56,7 @@ async def list_candidate_interviews(id: str, db: AsyncSession = Depends(get_db))
 
     result = await db.execute(
         select(InterviewModel)
-        .where(InterviewModel.candidate_id == id)
+        .where(InterviewModel.candidate_id == candidate_id)
         .options(selectinload(InterviewModel.feedback))  # preload feedback
     )
     results = result.scalars().all()
