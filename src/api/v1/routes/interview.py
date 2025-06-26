@@ -7,18 +7,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.schemas.interview import (
+    CandiateInterviewListResponse,
+    InterviewCreate,
+    InterviewCreateResponse,
+)
 from src.database import CandidateModel, InterviewModel, get_db
 
 interview_router = APIRouter()
 
 
-class InterviewCreate(BaseModel):
-    interviewer: str
-    scheduled_at: datetime.datetime
-    result: Optional[str]
-
-
-@interview_router.post("")
+@interview_router.post("", response_model=InterviewCreateResponse, status_code=201)
 async def create_schedule_interview(
     candidate_id: str, interview: InterviewCreate, db: AsyncSession = Depends(get_db)
 ):
@@ -43,22 +42,37 @@ async def create_schedule_interview(
     await db.commit()
     await db.refresh(db_interview)
 
-    return db_interview
+    result = {
+        "status": True,
+        "message": "Interview scheduled successfully",
+        "data": db_interview,
+    }
+
+    return result
 
 
-@interview_router.get("")
-async def list_candidate_interviews(candidate_id: str, db: AsyncSession = Depends(get_db)):
-    candidate_query_result = await db.execute(select(CandidateModel).where(CandidateModel.id == candidate_id))
+@interview_router.get("", response_model=CandiateInterviewListResponse)
+async def list_candidate_interviews(
+    candidate_id: str, db: AsyncSession = Depends(get_db)
+):
+    candidate_query_result = await db.execute(
+        select(CandidateModel).where(CandidateModel.id == candidate_id)
+    )
     candidate = candidate_query_result.scalars().first()
 
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
-    result = await db.execute(
+    interview_query_result = await db.execute(
         select(InterviewModel)
         .where(InterviewModel.candidate_id == candidate_id)
         .options(selectinload(InterviewModel.feedback))  # preload feedback
     )
-    results = result.scalars().all()
-    print("results:", results)
-    return results
+    interview_results = interview_query_result.scalars().all()
+
+    result = {
+        "status": True,
+        "message": "Interviews retrieved successfully",
+        "data": interview_results,
+    }
+    return result
