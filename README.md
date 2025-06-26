@@ -21,6 +21,7 @@ uvicorn src.main:app --reload
 
 ## run test
 ```
+python -m pytest
 python -m pytest tests/ -vv -s
 ```
 
