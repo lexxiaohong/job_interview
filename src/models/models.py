@@ -36,7 +36,6 @@ class CandidateModel(Base):
     interviews = relationship(
         "InterviewModel",
         back_populates="candidate",
-        lazy="selectin",
         cascade="all, delete-orphan",
     )
 
