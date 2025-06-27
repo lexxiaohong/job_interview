@@ -4,13 +4,13 @@ from pydantic import BaseModel, Field
 
 class FeedbackCreate(BaseModel):
     rating:  int = Field(..., ge=1, le=5)
-    comment: Optional[str] = None
+    comment: str
 
 
 class FeedbackCreateData(BaseModel):
     id: int
     rating: int
-    comment: Optional[str] = None
+    comment: str
 
     class Config:
         from_attributes = True
