@@ -52,8 +52,8 @@ class InterviewResponse(BaseModel):
     candidate_id: str
     interviewer: str
     scheduled_at: datetime.datetime  # ISO format datetime string
-    result: Optional[str]
-    feedback: Optional[FeedbackResponse]
+    result: Optional[str] = None
+    feedback: Optional[FeedbackResponse] = None
 
     class Config:
         from_attributes = True

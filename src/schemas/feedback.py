@@ -10,7 +10,7 @@ class FeedbackCreate(BaseModel):
 class FeedbackCreateData(BaseModel):
     id: int
     rating: int
-    comment: Optional[str]
+    comment: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -19,7 +19,7 @@ class FeedbackCreateData(BaseModel):
 class FeedbackCreateResponse(BaseModel):
     status: bool
     message: str
-    data: Optional[FeedbackCreateData]
+    data: Optional[FeedbackCreateData] = None
 
 
 class FeedbackViewData(BaseModel):
@@ -32,4 +32,4 @@ class FeedbackViewData(BaseModel):
 class FeedbackViewResponse(BaseModel):
     status: bool
     message: str
-    data: Optional[FeedbackViewData]
+    data: Optional[FeedbackViewData] = None

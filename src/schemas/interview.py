@@ -7,14 +7,14 @@ from pydantic import BaseModel
 class InterviewCreate(BaseModel):
     interviewer: str
     scheduled_at: datetime.datetime
-    result: Optional[str]
+    result: Optional[str] = None
 
 
 class InterviewCreateData(BaseModel):
     id: int
     interviewer: str
     scheduled_at: datetime.datetime
-    result: Optional[str]
+    result: Optional[str] = None
     candidate_id: str
 
     class Config:
@@ -24,7 +24,7 @@ class InterviewCreateData(BaseModel):
 class InterviewCreateResponse(BaseModel):
     status: bool
     message: str
-    data: Optional[InterviewCreateData]
+    data: Optional[InterviewCreateData] = None
 
 
 class FeedbackResponse(BaseModel):
@@ -40,7 +40,7 @@ class InterviewListData(BaseModel):
     scheduled_at: datetime.datetime
     result: Optional[str] = None
     candidate_id: str
-    feedback: Optional[FeedbackResponse]
+    feedback: Optional[FeedbackResponse] = None
 
 
 class CandiateInterviewListResponse(BaseModel):
